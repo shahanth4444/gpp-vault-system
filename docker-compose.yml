@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  gpp-system:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "8545:8545"
+    volumes:
+      - .:/app
+      - /app/node_modules
