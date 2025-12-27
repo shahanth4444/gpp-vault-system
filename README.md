@@ -48,4 +48,75 @@ This command will spin up a local blockchain, deploy contracts, and expose the R
 ```bash
 docker-compose up --build
 ```
+### Expected Output:
+AuthorizationManager deployed to: 0x...
 
+SecureVault deployed to: 0x...
+
+Vault funded with 10 ETH
+
+Node is running at [http://0.0.0.0:8545](http://0.0.0.0:8545)
+
+### Running Tests Locally
+
+We have included comprehensive integration tests covering successful withdrawals, replay attacks, and data tampering.
+
+```bash
+npm install
+npx hardhat test
+```
+
+## 4. Manual Interaction Flow (Step 7 Validation)
+
+To generate an authorization signature off-chain without a frontend, use the included script:
+
+Ensure the local node is running (via Docker or npx hardhat node).
+
+Run the signing script:
+
+```bash
+
+npx hardhat run scripts/sign.js --network localhost
+```
+
+Output: The script will print the specific Signature, Nonce, and Deadline.
+
+Action: Use these values to call withdraw() on the Vault contract via Etherscan, Remix, or Console.
+
+## 5. Technology Stack
+
+* **Solidity 0.8.20**
+
+* **Hardhat**
+
+* **Ethers.js v6**
+
+* **Docker**
+
+* **OpenZeppelin Contracts (EIP712, ECDSA, ReentrancyGuard, Ownable)**
+
+## 6. Interaction Flow Diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Signer as Owner (Off-Chain)
+    participant Vault as SecureVault
+    participant Auth as AuthorizationManager
+
+    Note over User, Signer: Step 1: Authorization
+    User->>Signer: Request Withdrawal Permission
+    Signer-->>User: Signs EIP-712 Data (Returns Signature)
+
+    Note over User, Vault: Step 2: Execution
+    User->>Vault: withdraw(amount, nonce, signature)
+    activate Vault
+    Vault->>Auth: verifyAuthorization(...)
+    activate Auth
+    Auth->>Auth: Check Signature & Replay
+    Auth-->>Vault: Return True
+    deactivate Auth
+    Vault->>User: Transfer ETH
+    deactivate Vault
+```
+---
